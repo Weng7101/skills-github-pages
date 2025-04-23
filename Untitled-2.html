@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>钥匙扣售卖网站</title>
+  <style>
+    /* 全局样式 */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 头部样式 */
+    header {
+      text-align: center;
+      background-color: #f4f4f4;
+      padding: 10px;
+    }
+
+    /* 目录样式 */
+   .nav {
+      text-align: center;
+      background-color: #e0e0e0;
+      padding: 10px;
+    }
+
+    /* 商品展示区域 */
+   .product {
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin: 20px;
+      width: 300px;
+      display: inline-block;
+      vertical-align: top;
+    }
+
+   .product img {
+      width: 100%;
+    }
+
+    /* 购物车样式 */
+    #cart {
+      border: 1px solid #ccc;
+      padding: 10px 20px;
+      width: 180px;
+      position: fixed;
+      top: 100px;
+      right: 20px;
+    }
+
+    /* 新增的显示商品和总金额的方块样式 */
+    #purchase-summary {
+      border: 1px solid #ccc;
+      padding: 10px 20px;
+      width: 180px;
+      position: fixed;
+      top: 300px;
+      right: 20px;
+    }
+
+    /* 结算按钮样式 */
+    #checkout-btn {
+      width: 100%;
+      background-color: #ff4757;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    /* 时间日期样式 */
+    #date-time {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    /* 下一页内容默认隐藏 */
+   .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 头部 -->
+  <header>
+    <h1>MX2099工作室</h1>
+  </header>
+
+  <!-- 目录导航 -->
+  <div class="nav">
+    首页 |
+    商品展示 |
+    购物车
+  </div>
+
+  <!-- 时间日期 -->
+  <div id="date-time"></div>
+
+  <!-- 首页内容 -->
+  <div id="home-content" style="padding: 20px;">
+    <h2>欢迎来到MX2099钥匙扣商店</h2>
+    <p>这里有各种精美钥匙扣，点击下方按钮查看商品</p >
+    <!-- 新增的钥匙扣展示框架及金额 -->
+    <div class="product">
+      < img src="https://via.placeholder.com/300" alt="钥匙扣示例1">
+      <h3>示例钥匙扣1</h3>
+      <p>价格：18元</p >
+      <button onclick="addToCart('示例钥匙扣1', 18)">加入购物车</button>
+    </div>
+    <div class="product">
+      < img src="https://via.placeholder.com/300" alt="钥匙扣示例2">
+      <h3>示例钥匙扣2</h3>
+      <p>价格：16元</p >
+      <button onclick="addToCart('示例钥匙扣2', 16)">加入购物车</button>
+    </div>
+  </div>
+
+  <!-- 商品展示页面 -->
+  <div id="products-page" class="hidden">
+    <h2>钥匙扣商品展示</h2>
+    <div class="product">
+      < img src="https://via.placeholder.com/300" alt="钥匙扣1">
+      <h3>可爱动物钥匙扣</h3>
+      <p>价格：15元</p >
+      <button onclick="addToCart('可爱动物钥匙扣', 15)">加入购物车</button>
+    </div>
+    <div class="product">
+      < img src="https://via.placeholder.com/300" alt="钥匙扣2">
+      <h3>简约风格钥匙扣</h3>
+      <p>价格：10元</p >
+      <button onclick="addToCart('简约风格钥匙扣', 10)">加入购物车</button>
+    </div>
+  </div>
+
+  <!-- 购物车方块 -->
+  <div id="cart">
+    <h3>购物车</h3>
+    <ul id="cart-items"></ul>
+    <p>折扣金额：<span id="discount">0元</span></p >
+    <p>总价格：<span id="total">0元</span></p >
+    <button id="checkout-btn" onclick="checkout()">立即结算</button>
+  </div>
+
+  <!-- 新增的显示购买商品和总金额的方块 -->
+  <div id="purchase-summary">
+    <h3>已购买商品及金额</h3>
+    <ul id="purchase-items"></ul>
+    <p>已购商品总金额：<span id="purchase-total">0元</span></p >
+  </div>
+
+  <script>
+    // 初始化时间显示
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('date-time').textContent =
+        now.toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 购物车数据
+    let cart = [];
+    let totalPrice = 0;
+
+    // 添加到购物车
+    function addToCart(name, price) {
+      cart.push({ name, price });
+      updateCartDisplay();
+      updatePurchaseSummary();
+    }
+
+    // 更新购物车显示
+    function updateCartDisplay() {
+      totalPrice = cart.reduce((acc, item) => acc + item.price, 0);
+      const discount = totalPrice >= 100? totalPrice * 0.1 : 0; // 10%折扣
+
+      document.getElementById('cart-items').innerHTML =
+        cart.map(item => `<li>${item.name} - ${item.price}元</li>`).join('');
+
+      document.getElementById('discount').textContent = `${discount.toFixed(2)}元`;
+      document.getElementById('total').textContent = `${(totalPrice - discount).toFixed(2)}元`;
+    }
+
+    // 更新显示购买商品和总金额的方块
+    function updatePurchaseSummary() {
+      const purchaseItemsList = document.getElementById('purchase-items');
+      const purchaseTotalElement = document.getElementById('purchase-total');
+
+      purchaseItemsList.innerHTML = '';
+      let purchaseTotal = 0;
+
+      cart.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${item.name} - ${item.price}元`;
+        purchaseItemsList.appendChild(listItem);
+        purchaseTotal += item.price;
+      });
+
+      purchaseTotalElement.textContent = `${purchaseTotal.toFixed(2)}元`;
+    }
+
+    // 结算功能
+    function checkout() {
+      if (cart.length === 0) return alert('购物车为空');
+
+      const discount = totalPrice >= 100? totalPrice * 0.1 : 0;
+      const finalPrice = totalPrice - discount;
+
+      alert(`结算成功！\n总金额：${totalPrice}元\n折扣金额：${discount}元\n实际支付：${finalPrice}元`);
+      cart = [];
+      updateCartDisplay();
+      updatePurchaseSummary();
+      hideCart();
+    }
+
+    // 页面导航功能
+    function goToHome() {
+      // 显示首页，隐藏其他页面
+      document.getElementById('home-content').style.display = 'block';
+      document.getElementById('products-page').classList.add('hidden');
+      document.getElementById('cart').classList.add('hidden');
+      // 这里不再隐藏已购买商品及金额的方块
+      // document.getElementById('purchase-summary').classList.add('hidden');
+
+      // 滚动到页面顶部
+      window.scrollTo({ top: 0, behavior:'smooth' });
+    }
+
+    function showProductsPage() {
+      document.getElementById('home-content').style.display = 'none';
+      document.getElementById('products-page').classList.remove('hidden');
+      window.scrollTo({ top: header.offsetHeight + 100, behavior:'smooth' });
+    }
+
+    function showCartPage() {
+      document.getElementById('cart').classList.remove('hidden');
+      document.getElementById('purchase-summary').classList.remove('hidden');
+      updateCartDisplay();
+      updatePurchaseSummary();
+      window.scrollTo({ top: header.offsetHeight + 100, behavior:'smooth' });
+    }
+
+    // 隐藏购物车
+    function hideCart() {
+      document.getElementById('cart').classList.add('hidden');
+      // 隐藏购物车时，也隐藏已购买商品及金额的方块
+      document.getElementById('purchase-summary').classList.add('hidden');
+    }
+
+    // 初始隐藏购物车和商品页
+    document.getElementById('products-page').classList.add('hidden');
+    document.getElementById('cart').classList.add('hidden');
+    // 不再初始隐藏已购买商品及金额的方块
+    // document.getElementById('purchase-summary').classList.add('hidden');
+  </script>
+</body>
+
+</html>
